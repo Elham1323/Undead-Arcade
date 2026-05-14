@@ -155,3 +155,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Bullet
   speed: 20
   lifetime: 2
+  damage: 10
+  hitSound: {fileID: 8300000, guid: 574e2eaafa98fa04bae97cbeaef7a77b, type: 3}
+  hitVolume: 0.5

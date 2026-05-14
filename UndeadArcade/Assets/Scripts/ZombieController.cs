@@ -16,6 +16,10 @@ public class ZombieController : MonoBehaviour
     private Health playerHealth;
     private Health myHealth;
 
+    // Reference to the ScoreManager. We find it automatically at Start so we don't have
+    // to drag it into every single zombie's prefab.
+    private ScoreManager scoreManager;
+
     [Header("Attack")]
     // How close the zombie has to be to start attacking.
     public float attackRange = 1.5f;
@@ -45,6 +49,9 @@ public class ZombieController : MonoBehaviour
         {
             Debug.LogError("ZombieController could not find a GameObject tagged 'Player'!");
         }
+
+        // Find the ScoreManager in the scene. There's only one so FindAnyObjectByType is fine.
+        scoreManager = FindAnyObjectByType<ScoreManager>();
 
         // Listen for our own death event. When we die, run the OnDied method.
         // This is the Observer pattern - we subscribe to an event and react to it.
@@ -110,6 +117,12 @@ public class ZombieController : MonoBehaviour
 
         // Stop pathfinding so we don't keep walking.
         if (agent != null) agent.isStopped = true;
+
+        // Award score for the kill, if there's a ScoreManager in the scene.
+        if (scoreManager != null)
+        {
+            scoreManager.AddZombieKill();
+        }
 
         // Remove the zombie from the scene.
         // Slight delay so any "death sound" or particle effect we add later has time to play.

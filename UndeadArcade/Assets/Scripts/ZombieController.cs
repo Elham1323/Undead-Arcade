@@ -10,6 +10,10 @@ using UnityEngine.AI;
 // ScriptableObject so they can be tweaked or swapped without editing the prefab.
 // Movement speed is set by the WaveManager when spawning, so each wave can ramp
 // the difficulty independently of the zombie type.
+//
+// The Animator parameters (IsWalking, IsAttacking, Die) are updated to drive
+// the model's animation states. The script FSM still owns the logic - the
+// Animator just visualises it.
 public class ZombieController : MonoBehaviour
 {
     private enum ZombieState { Chase, Attack, Dead }
@@ -40,6 +44,11 @@ public class ZombieController : MonoBehaviour
     // The AudioSource on this GameObject.
     private AudioSource audioSource;
 
+    [Header("Animation")]
+    // The Animator on the visual model (a child of the zombie). Drag the child in the Inspector,
+    // or leave it empty and it'll auto-find one in the children at Start.
+    public Animator animator;
+
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -47,8 +56,15 @@ public class ZombieController : MonoBehaviour
         // Grab the AudioSource we attached in the Inspector.
         audioSource = GetComponent<AudioSource>();
 
+        // If no Animator was assigned in the Inspector, search the children for one.
+        // This is handy because the Animator usually lives on the imported Mixamo model
+        // which is a child of this zombie GameObject.
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
+
         // Apply the stats from the ScriptableObject to this zombie.
-        // We do this in Start so the Health component is ready to receive its max value.
         if (data != null && myHealth != null)
         {
             myHealth.SetMaxHealth(data.maxHealth);
@@ -76,7 +92,6 @@ public class ZombieController : MonoBehaviour
         // Find the ScoreManager in the scene. There's only one so FindAnyObjectByType is fine.
         scoreManager = FindAnyObjectByType<ScoreManager>();
         // Listen for our own death event. When we die, run the OnDied method.
-        // This is the Observer pattern - we subscribe to an event and react to it.
         if (myHealth != null)
         {
             myHealth.OnDied.AddListener(OnDied);
@@ -104,11 +119,16 @@ public class ZombieController : MonoBehaviour
     {
         agent.SetDestination(player.position);
         float distance = Vector3.Distance(transform.position, player.position);
-        // Read attack range from the ScriptableObject so the zombie variant decides what's "close enough".
         float range = (data != null) ? data.attackRange : 1.5f;
         if (distance <= range)
         {
             currentState = ZombieState.Attack;
+            UpdateAnimator();
+        }
+        else
+        {
+            // Still chasing. Make sure the animator knows we're walking, not idle.
+            UpdateAnimator();
         }
     }
     void AttackPlayer()
@@ -119,6 +139,7 @@ public class ZombieController : MonoBehaviour
         if (distance > range)
         {
             currentState = ZombieState.Chase;
+            UpdateAnimator();
             return;
         }
         // Damage the player on a timer.
@@ -130,6 +151,17 @@ public class ZombieController : MonoBehaviour
             nextAttackTime = Time.time + interval;
         }
     }
+    // Sets the Animator parameters based on the current FSM state.
+    // Idle = not walking, not attacking
+    // Walk = walking (chasing) but not attacking
+    // Attack = within attack range
+    // Death is fired separately in OnDied.
+    void UpdateAnimator()
+    {
+        if (animator == null) return;
+        animator.SetBool("IsWalking", currentState == ZombieState.Chase);
+        animator.SetBool("IsAttacking", currentState == ZombieState.Attack);
+    }
     // Plays the groan sound when the timer hits, then picks a new random delay.
     void TryGroan()
     {
@@ -138,13 +170,21 @@ public class ZombieController : MonoBehaviour
         {
             audioSource.PlayOneShot(groanSound);
         }
-        // Schedule the next groan at a random time so it feels natural.
         nextGroanTime = Time.time + Random.Range(minGroanInterval, maxGroanInterval);
     }
     // Called when our Health component fires its OnDied event.
     void OnDied()
     {
         currentState = ZombieState.Dead;
+        // Trigger the death animation. We set Die = true (it's a bool, not a trigger,
+        // because Unity 6 sometimes converts trigger params during rename).
+        if (animator != null)
+        {
+            animator.SetBool("Die", true);
+            // Clear movement booleans so the animator doesn't try to blend back to walk.
+            animator.SetBool("IsWalking", false);
+            animator.SetBool("IsAttacking", false);
+        }
         // Stop pathfinding so we don't keep walking.
         if (agent != null) agent.isStopped = true;
         // Award score for the kill, if there's a ScoreManager in the scene.
@@ -153,7 +193,7 @@ public class ZombieController : MonoBehaviour
             scoreManager.AddZombieKill();
         }
         // Remove the zombie from the scene.
-        // Slight delay so any "death sound" or particle effect we add later has time to play.
-        Destroy(gameObject, 0.2f);
+        // Slight delay so the death animation can play (was 0.2s before, now 1.5s for animation).
+        Destroy(gameObject, 0.3f);
     }
 }

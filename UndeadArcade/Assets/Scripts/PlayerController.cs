@@ -4,6 +4,10 @@ using UnityEngine.InputSystem;
 // Walk-and-shoot style: the player faces the direction they're moving,
 // and bullets fire in that same direction. If the player stops moving,
 // they keep facing the last direction so they can still shoot.
+//
+// The Animator parameters (IsWalking, Shoot) are updated to drive the
+// player model's animation states. IsWalking is set true when the player
+// is moving, Shoot is triggered every time the player fires.
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -13,12 +17,16 @@ public class PlayerController : MonoBehaviour
     public Transform bulletSpawnPoint;
     public float fireRate = 0.15f;
     private float nextFireTime = 0f;
-
     [Header("Audio")]
     // The gunshot sound clip. Drag Gunshot.mp3 from Assets/Audio in the Inspector.
     public AudioClip gunshotSound;
     // The AudioSource on this GameObject that actually plays the sound.
     private AudioSource audioSource;
+
+    [Header("Animation")]
+    // The Animator on the visual model (a child of the Player). Drag the child in the Inspector,
+    // or leave it empty and it'll auto-find one in the children at Start.
+    public Animator animator;
 
     private Rigidbody rb;
     private Vector2 moveInput;
@@ -32,6 +40,11 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         // Grab the AudioSource we attached in the Inspector.
         audioSource = GetComponent<AudioSource>();
+        // If no Animator was assigned in the Inspector, search the children for one.
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
     }
     void Start()
     {
@@ -49,9 +62,16 @@ public class PlayerController : MonoBehaviour
     }
     void Update()
     {
+        // Update the animator with whether we're walking. The check uses the same
+        // 0.1f deadzone as the facing direction, so anim and visual stay in sync.
+        bool isMoving = moveInput.sqrMagnitude > 0.1f;
+        if (animator != null)
+        {
+            animator.SetBool("IsWalking", isMoving);
+        }
+
         // If the player is actually moving (joystick deflected), update the facing direction.
-        // The 0.1f deadzone prevents tiny stick drifts from changing the facing.
-        if (moveInput.sqrMagnitude > 0.1f)
+        if (isMoving)
         {
             // Build a 3D direction from the 2D input.
             // Joystick X -> world X (left/right), Joystick Y -> world Z (forward/back).
@@ -74,12 +94,16 @@ public class PlayerController : MonoBehaviour
         // The spawn point's rotation matches the player's rotation (it's a child of the Player),
         // so spawning the bullet with the spawn point's rotation makes it fly that direction.
         Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
-
         // Play the gunshot sound. PlayOneShot lets multiple gunshots overlap without cutting
         // each other off, which feels good when firing rapidly.
         if (audioSource != null && gunshotSound != null)
         {
             audioSource.PlayOneShot(gunshotSound);
+        }
+        // Trigger the shoot animation. SetTrigger fires once and auto-resets.
+        if (animator != null)
+        {
+            animator.SetTrigger("Shoot");
         }
     }
     void FixedUpdate()

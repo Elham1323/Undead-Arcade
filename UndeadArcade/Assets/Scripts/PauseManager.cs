@@ -78,18 +78,36 @@ public class PauseManager : MonoBehaviour
             Rigidbody rb = player.GetComponent<Rigidbody>();
             if (rb != null) rb.linearVelocity = Vector3.zero;
             AudioSource audio = player.GetComponent<AudioSource>();
-            if (audio != null) audio.enabled = false;
+            if (audio != null)
+            {
+                // Stop any one-shot sounds already playing (gunshot, hit, etc.) before muting.
+                audio.Stop();
+                audio.enabled = false;
+            }
         }
 
-        // Freeze every active zombie: stop AI, stop pathing, mute audio.
+        // Freeze every active zombie. We do this carefully because new zombies
+        // spawning on the same frame as the pause can sneak through if we don't
+        // also explicitly stop their NavMeshAgent and AudioSource.
         ZombieController[] zombies = FindObjectsByType<ZombieController>(FindObjectsInactive.Exclude);
         foreach (ZombieController z in zombies)
         {
             z.enabled = false;
             NavMeshAgent agent = z.GetComponent<NavMeshAgent>();
-            if (agent != null) agent.enabled = false;
+            if (agent != null)
+            {
+                // Stop the agent first so it can't take another step, then disable it.
+                if (agent.isOnNavMesh) agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+                agent.enabled = false;
+            }
             AudioSource audio = z.GetComponent<AudioSource>();
-            if (audio != null) audio.enabled = false;
+            if (audio != null)
+            {
+                // Stop any currently-playing groan so it doesn't keep playing after pause.
+                audio.Stop();
+                audio.enabled = false;
+            }
         }
 
         if (waveManager != null) waveManager.enabled = false;
@@ -130,7 +148,6 @@ public class PauseManager : MonoBehaviour
 
     public void GoToMainMenu()
     {
-        Debug.Log("Main Menu pressed (scene not built yet).");
-        // TODO: SceneManager.LoadScene("MainMenu");
+        SceneManager.LoadScene("MainMenu");
     }
 }

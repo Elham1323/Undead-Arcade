@@ -5,6 +5,11 @@ using UnityEngine.AI;
 // Chase = walking toward the player
 // Attack = close enough to damage them on a timer
 // Dead = no longer active, scheduled for destruction
+//
+// Stats (health, attack range, damage, attack interval) come from a ZombieData
+// ScriptableObject so they can be tweaked or swapped without editing the prefab.
+// Movement speed is set by the WaveManager when spawning, so each wave can ramp
+// the difficulty independently of the zombie type.
 public class ZombieController : MonoBehaviour
 {
     private enum ZombieState { Chase, Attack, Dead }
@@ -16,13 +21,11 @@ public class ZombieController : MonoBehaviour
     // Reference to the ScoreManager. We find it automatically at Start so we don't have
     // to drag it into every single zombie's prefab.
     private ScoreManager scoreManager;
-    [Header("Attack")]
-    // How close the zombie has to be to start attacking.
-    public float attackRange = 1.5f;
-    // How much damage one bite does.
-    public float damagePerHit = 20f;
-    // How many seconds between bites.
-    public float attackInterval = 1f;
+
+    [Header("Stats")]
+    // The ScriptableObject that holds this zombie's stats. Drag DefaultZombie in the Inspector.
+    public ZombieData data;
+
     // When the next attack is allowed.
     private float nextAttackTime = 0f;
 
@@ -43,6 +46,18 @@ public class ZombieController : MonoBehaviour
         myHealth = GetComponent<Health>();
         // Grab the AudioSource we attached in the Inspector.
         audioSource = GetComponent<AudioSource>();
+
+        // Apply the stats from the ScriptableObject to this zombie.
+        // We do this in Start so the Health component is ready to receive its max value.
+        if (data != null && myHealth != null)
+        {
+            myHealth.SetMaxHealth(data.maxHealth);
+        }
+        else if (data == null)
+        {
+            Debug.LogError("ZombieController: No ZombieData assigned! Using fallback defaults.");
+        }
+
         // The first groan happens quickly after spawn so the zombie is audibly "alive" right away.
         // Subsequent groans use the normal random interval.
         nextGroanTime = Time.time + Random.Range(0.2f, 1.5f);
@@ -89,7 +104,9 @@ public class ZombieController : MonoBehaviour
     {
         agent.SetDestination(player.position);
         float distance = Vector3.Distance(transform.position, player.position);
-        if (distance <= attackRange)
+        // Read attack range from the ScriptableObject so the zombie variant decides what's "close enough".
+        float range = (data != null) ? data.attackRange : 1.5f;
+        if (distance <= range)
         {
             currentState = ZombieState.Attack;
         }
@@ -98,7 +115,8 @@ public class ZombieController : MonoBehaviour
     {
         // If the player walked away, go back to chasing.
         float distance = Vector3.Distance(transform.position, player.position);
-        if (distance > attackRange)
+        float range = (data != null) ? data.attackRange : 1.5f;
+        if (distance > range)
         {
             currentState = ZombieState.Chase;
             return;
@@ -106,8 +124,10 @@ public class ZombieController : MonoBehaviour
         // Damage the player on a timer.
         if (Time.time >= nextAttackTime && playerHealth != null)
         {
-            playerHealth.TakeDamage(damagePerHit);
-            nextAttackTime = Time.time + attackInterval;
+            float damage = (data != null) ? data.damagePerHit : 20f;
+            float interval = (data != null) ? data.attackInterval : 1f;
+            playerHealth.TakeDamage(damage);
+            nextAttackTime = Time.time + interval;
         }
     }
     // Plays the groan sound when the timer hits, then picks a new random delay.

@@ -185,9 +185,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adae3f4b040bb6848b6b9908d48eb3b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZombieController
-  attackRange: 1.5
-  damagePerHit: 20
-  attackInterval: 1
+  data: {fileID: 11400000, guid: 13cfe72a27b6be74fa903dbedf4b3cda, type: 2}
   groanSound: {fileID: 8300000, guid: 6dfe756f00810fe44ad6456ef019a874, type: 3}
   minGroanInterval: 3
   maxGroanInterval: 8

@@ -3,7 +3,62 @@ guid: e0c7948a7e907b2458485a0f921639e1
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ch15_body
+    second: {fileID: 2100000, guid: c43e722879357e94092dad03abff17b2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ch15_body1
+    second: {fileID: 2100000, guid: 8a4d71433f253fa4eb8b34e0d90b5ac6, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1001_Diffuse
+    second: {fileID: 2800000, guid: 228a386fe68955a4abd12bdfda24b2c2, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1001_Glossiness
+    second: {fileID: 2800000, guid: a614f64323a6ba846a0974b7c14b818d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1001_Normal
+    second: {fileID: 2800000, guid: 00ef471eafceb47478290aa9c067d893, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1001_Specular
+    second: {fileID: 2800000, guid: 78aef44ba73606b4f991430647edf5e5, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1002_Diffuse
+    second: {fileID: 2800000, guid: 209b91b4e9f671a4786e0259ebc5a42b, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1002_Emissive
+    second: {fileID: 2800000, guid: 1397f380368d9324cbc3be057eea1b0f, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1002_Glossiness
+    second: {fileID: 2800000, guid: 320098127564ad046bf3550e250c4942, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1002_Normal
+    second: {fileID: 2800000, guid: f945e83b9ab3e9844af42e1e2906ed42, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch15_1002_Specular
+    second: {fileID: 2800000, guid: 0d55970fca667324eb28c57b9b384b7b, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0

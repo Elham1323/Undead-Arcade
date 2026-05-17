@@ -23,7 +23,7 @@ Development was documented as a series of blog posts in the `blogposts/` folder:
 - [Blog 3 — Milestone 1: Getting the Core Loop Working](blogposts/03-milestone-1-core-loop.md)
 - [Blog 4 — Milestone 2: Wave System, HUD, and Game Feel](blogposts/04-milestone-2-wave-system-hud.md)
 - [Blog 5 — Milestone 3: ScriptableObjects, Menus, Animations, and Deployment](blogposts/05-milestone-3-polish-and-deployment.md)
-- Blog 6 — Final Showcase (coming after the arcade test)
+- [Blog 6 — Final Showcase](blogposts/06-final-showcase.md)
 
 ## Controls
 
@@ -34,8 +34,9 @@ Development was documented as a series of blog posts in the `blogposts/` folder:
 
 **Gamepad / VIA Arcade Machine:**
 - Left analog stick — Move
-- Right trigger — Fire
-- Start button — Pause
+- Black button — Fire
+- Green button — Accept
+- Yellow Button - Pause
 
 ## Third-Party Assets
 
@@ -53,10 +54,6 @@ Development was documented as a series of blog posts in the `blogposts/` folder:
 - Unity New Input System
 - NavMesh AI Navigation
 - Git LFS for large FBX model files
-
-## Known Issues
-
-## Known Issues
 
 ## Known Issues
 

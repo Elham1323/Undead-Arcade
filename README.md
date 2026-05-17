@@ -56,7 +56,12 @@ Development was documented as a series of blog posts in the `blogposts/` folder:
 
 ## Known Issues
 
+## Known Issues
+
+## Known Issues
+
 - Zombie death animation only displays the first frame instead of the full falling motion. Workaround: short destroy delay so the zombie disappears quickly after dying.
 - The shooting animation does not visually fit the player's fast fire rate. The bullets convey the shooting action well enough.
-- On the first pause after a scene loads, zombies occasionally still play a groan or continue their walk animation while frozen in place.
+- On the first pause after a scene loads, the freeze does not fully take effect. Zombies can still move and play groans. Pressing pause a second time freezes them in place, but their walking animation continues even though they are stationary.
 - The Quit button on the main menu freezes the page in the WebGL build. This is a known WebGL limitation as the platform has no concept of quitting an application.
+- On the VIA Arcade Machine, the joystick navigates menus correctly between most buttons but skips the Restart button in the pause menu. The button is still reachable by mouse and can also be triggered via the death screen Restart button or by quitting to the main menu. The cause is unknown and could not be identified in the time available.

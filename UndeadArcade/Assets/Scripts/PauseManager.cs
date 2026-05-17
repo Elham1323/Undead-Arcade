@@ -2,9 +2,10 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 // PauseManager handles pausing and resuming the game. The pause menu shows
-// when the player presses Escape (keyboard) or Start (gamepad), and offers
-// Resume, Restart, and Main Menu buttons.
+// when the player presses Escape (keyboard) or the north button (gamepad/arcade),
+// and offers Resume, Restart, and Main Menu buttons.
 //
 // We do NOT use Time.timeScale = 0 because it breaks UI input with the new
 // Input System. Instead we disable the individual components that produce
@@ -20,6 +21,10 @@ public class PauseManager : MonoBehaviour
     public WaveManager waveManager;
     // The GameManager so we can check if the game has already ended.
     public GameManager gameManager;
+
+    [Header("Default Selected Button")]
+    // The button to auto-select when the pause panel opens. Drag ResumeButton in.
+    public GameObject firstButton;
 
     // Current pause state.
     private bool isPaused = false;
@@ -37,7 +42,9 @@ public class PauseManager : MonoBehaviour
         {
             pauseKeyPressed = true;
         }
-        if (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame)
+        // The VIA Arcade does not have a Start button, so we use the north (Y) button
+        // which maps to one of the colored buttons on the arcade panel via Steam Input.
+        if (Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame)
         {
             pauseKeyPressed = true;
         }
@@ -69,6 +76,11 @@ public class PauseManager : MonoBehaviour
     {
         isPaused = true;
         if (pausePanel != null) pausePanel.SetActive(true);
+        // Auto-select the resume button so joystick / arcade navigation can use it.
+        if (firstButton != null && EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(firstButton);
+        }
 
         // Freeze the player: stop input, stop velocity, mute audio.
         PlayerController player = FindAnyObjectByType<PlayerController>();
@@ -80,15 +92,11 @@ public class PauseManager : MonoBehaviour
             AudioSource audio = player.GetComponent<AudioSource>();
             if (audio != null)
             {
-                // Stop any one-shot sounds already playing (gunshot, hit, etc.) before muting.
                 audio.Stop();
                 audio.enabled = false;
             }
         }
 
-        // Freeze every active zombie. We do this carefully because new zombies
-        // spawning on the same frame as the pause can sneak through if we don't
-        // also explicitly stop their NavMeshAgent and AudioSource.
         ZombieController[] zombies = FindObjectsByType<ZombieController>(FindObjectsInactive.Exclude);
         foreach (ZombieController z in zombies)
         {
@@ -96,7 +104,6 @@ public class PauseManager : MonoBehaviour
             NavMeshAgent agent = z.GetComponent<NavMeshAgent>();
             if (agent != null)
             {
-                // Stop the agent first so it can't take another step, then disable it.
                 if (agent.isOnNavMesh) agent.isStopped = true;
                 agent.velocity = Vector3.zero;
                 agent.enabled = false;
@@ -104,7 +111,6 @@ public class PauseManager : MonoBehaviour
             AudioSource audio = z.GetComponent<AudioSource>();
             if (audio != null)
             {
-                // Stop any currently-playing groan so it doesn't keep playing after pause.
                 audio.Stop();
                 audio.enabled = false;
             }
@@ -118,7 +124,6 @@ public class PauseManager : MonoBehaviour
         isPaused = false;
         if (pausePanel != null) pausePanel.SetActive(false);
 
-        // Unfreeze the player.
         PlayerController player = FindAnyObjectByType<PlayerController>();
         if (player != null)
         {
@@ -127,7 +132,6 @@ public class PauseManager : MonoBehaviour
             if (audio != null) audio.enabled = true;
         }
 
-        // Unfreeze every zombie.
         ZombieController[] zombies = FindObjectsByType<ZombieController>(FindObjectsInactive.Exclude);
         foreach (ZombieController z in zombies)
         {

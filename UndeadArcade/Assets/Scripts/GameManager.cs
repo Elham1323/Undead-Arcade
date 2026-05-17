@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 // GameManager handles top-level game state: showing the Game Over and Win panels,
 // listening to player death and wave completion events, and reloading the scene
 // when the player restarts.
@@ -15,6 +16,12 @@ public class GameManager : MonoBehaviour
     public GameObject gameOverPanel;
     // The Win panel - shown when all waves are cleared. Drag WinPanel in.
     public GameObject winPanel;
+
+    [Header("Default Selected Buttons")]
+    // The button to auto-select when GameOverPanel appears. Drag RestartButton in.
+    public GameObject gameOverFirstButton;
+    // The button to auto-select when WinPanel appears. Drag RestartButtonWin in.
+    public GameObject winFirstButton;
 
     [Header("Audio")]
     // The death sound played when the player dies. Drag Death in the Inspector.
@@ -58,13 +65,15 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game Over! Player has died.");
         // Show the Game Over panel.
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        // Auto-select the restart button so joystick / arcade navigation can use it
+        // without needing a mouse. Must be done after SetActive(true).
+        if (gameOverFirstButton != null && EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(gameOverFirstButton);
+        }
         // Play the death sound through the Player's AudioSource, since it's already 2D and exists.
-        // We do this before FreezeGameplay because freezing disables the PlayerController, not
-        // the AudioSource - but doing it in this order keeps things clear.
         PlayDeathSound();
         // Freeze the gameplay manually instead of using Time.timeScale = 0.
-        // Time.timeScale = 0 breaks UI clicks with the new Input System, so instead
-        // we disable the things that move on their own.
         FreezeGameplay();
     }
     // Called when the WaveManager fires OnAllWavesCleared.
@@ -75,7 +84,11 @@ public class GameManager : MonoBehaviour
         Debug.Log("You survived all waves!");
         // Show the Win panel.
         if (winPanel != null) winPanel.SetActive(true);
-        // Freeze the gameplay so the player stops moving and can read the message.
+        // Auto-select the restart button for joystick / arcade navigation.
+        if (winFirstButton != null && EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(winFirstButton);
+        }
         FreezeGameplay();
     }
     // Plays the death sound through the Player's AudioSource (which is 2D, so no spatial delay).
@@ -89,30 +102,22 @@ public class GameManager : MonoBehaviour
         }
     }
     // Disables all gameplay scripts so the world goes still while a panel is showing.
-    // We don't use Time.timeScale = 0 because it breaks UI input with the new Input System.
     void FreezeGameplay()
     {
-        // Disable the player so they can't shoot or move anymore.
         PlayerController player = FindAnyObjectByType<PlayerController>();
         if (player != null) player.enabled = false;
-        // Disable every active zombie so they stop chasing.
         ZombieController[] zombies = FindObjectsByType<ZombieController>(FindObjectsInactive.Exclude);
         foreach (ZombieController z in zombies)
         {
             z.enabled = false;
-            // Also stop the NavMeshAgent so they don't keep sliding.
             UnityEngine.AI.NavMeshAgent agent = z.GetComponent<UnityEngine.AI.NavMeshAgent>();
             if (agent != null) agent.isStopped = true;
         }
-        // Also stop the WaveManager so it doesn't keep spawning if the win condition
-        // wasn't reached (i.e. player died mid-wave).
         if (waveManager != null) waveManager.enabled = false;
     }
     // Called by the Restart button on the panels. Reloads the current scene.
     public void RestartGame()
     {
-        // Reload the current scene. This resets everything to its initial state.
-        // No need to reset timeScale because we're not using it anymore.
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
